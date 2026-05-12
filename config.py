@@ -1,6 +1,6 @@
 import boto3
 
-REGION        = "eu-west-1"
+REGION        = "us-east-1"
 PROJECT_TAG   = "bedrock-metrics-poc"
 OWNER_TAG     = "melissa"
 ENV_TAG       = "playground"
