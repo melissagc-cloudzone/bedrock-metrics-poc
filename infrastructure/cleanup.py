@@ -7,6 +7,7 @@ Deletes:
   - OpenSearch Serverless collection + all 3 policies
   - S3 bucket + all objects
   - IAM role + inline policy
+  - DynamoDB audit trail table
 
 Run this as soon as testing is complete to stop OpenSearch billing.
 """
@@ -14,6 +15,8 @@ Run this as soon as testing is complete to stop OpenSearch billing.
 import boto3, json, time, sys, pathlib
 sys.path.insert(0, "..")
 from config import REGION
+
+DDB_TABLE = "bedrock-poc-usage-log"
 
 STATE_FILE = pathlib.Path("../infrastructure/.rag_state.json")
 
@@ -110,7 +113,13 @@ def run():
     print(f"6. Deleting S3 bucket ({state['bucket']})...")
     delete_s3_bucket(state["bucket"])
 
-    # 7. Remove state file
+    # 7. DynamoDB audit trail table
+    print(f"7. Deleting DynamoDB table ({DDB_TABLE})...")
+    ddb = boto3.client("dynamodb", region_name=REGION)
+    safe(ddb.delete_table, TableName=DDB_TABLE)
+    print(f"   ✓")
+
+    # 8. Remove state file
     STATE_FILE.unlink(missing_ok=True)
 
     print(f"\n{'=' * 60}")
