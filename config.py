@@ -13,12 +13,12 @@ TAGS = {
 }
 
 # Models used in the POC
-CHATBOT_MODEL = "amazon.nova-2-lite-v1:0"
+CHATBOT_MODEL = "us.amazon.nova-2-lite-v1:0"
 EMBED_MODEL   = "amazon.titan-embed-text-v2:0"
 
 # On-demand pricing (us-east-1, May 2026)
 PRICING = {
-    "amazon.nova-2-lite-v1:0": {
+    "us.amazon.nova-2-lite-v1:0": {
         "input_per_1k":  0.00007,
         "output_per_1k": 0.00028,
     },
