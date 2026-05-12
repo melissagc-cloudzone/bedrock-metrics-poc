@@ -108,30 +108,38 @@ print(f"  ✓ {COLL_NAME}")
 
 # ── Step 3: IAM Role ───────────────────────────────────────
 print("\nStep 3: Creating IAM role...")
-role = iam.create_role(
-    RoleName=KB_ROLE_NAME,
-    AssumeRolePolicyDocument=json.dumps({
-        "Version": "2012-10-17",
-        "Statement": [{"Effect": "Allow", "Principal": {"Service": "bedrock.amazonaws.com"},
-                       "Action": "sts:AssumeRole"}]
-    }),
-    Tags=boto_tags({"Phase": "rag"})
-)
-role_arn = role["Role"]["Arn"]
-
-iam.put_role_policy(
-    RoleName=KB_ROLE_NAME, PolicyName="BedrockMetricsPoCKBPolicy",
-    PolicyDocument=json.dumps({
-        "Version": "2012-10-17",
-        "Statement": [
-            {"Effect": "Allow", "Action": ["s3:GetObject", "s3:ListBucket"],
-             "Resource": [f"arn:aws:s3:::{BUCKET_NAME}", f"arn:aws:s3:::{BUCKET_NAME}/*"]},
-            {"Effect": "Allow", "Action": ["aoss:APIAccessAll"], "Resource": coll_arn},
-            {"Effect": "Allow", "Action": ["bedrock:InvokeModel"], "Resource": "*"},
-        ]
-    })
-)
-print(f"  ✓ {KB_ROLE_NAME}")
+try:
+    role = iam.create_role(
+        RoleName=KB_ROLE_NAME,
+        AssumeRolePolicyDocument=json.dumps({
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Principal": {"Service": "bedrock.amazonaws.com"},
+                           "Action": "sts:AssumeRole"}]
+        }),
+        Tags=boto_tags({"Phase": "rag"})
+    )
+    role_arn = role["Role"]["Arn"]
+    iam.put_role_policy(
+        RoleName=KB_ROLE_NAME, PolicyName="BedrockMetricsPoCKBPolicy",
+        PolicyDocument=json.dumps({
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": ["s3:GetObject", "s3:ListBucket"],
+                 "Resource": [f"arn:aws:s3:::{BUCKET_NAME}", f"arn:aws:s3:::{BUCKET_NAME}/*"]},
+                {"Effect": "Allow", "Action": ["aoss:APIAccessAll"], "Resource": coll_arn},
+                {"Effect": "Allow", "Action": ["bedrock:InvokeModel"], "Resource": "*"},
+            ]
+        })
+    )
+    print(f"  ✓ {KB_ROLE_NAME}")
+except Exception as e:
+    print(f"\n  ✗ IAM CreateRole denied (PowerUserAccess restriction): {e}")
+    print("  Cleaning up OpenSearch and S3 to stop billing...")
+    import subprocess as _sp
+    _sp.run(["python", "infrastructure/cleanup_partial.py",
+             coll_id, BUCKET_NAME, UNIQUE_ID], check=False)
+    print("  RAG use case skipped. Chatbot + DynamoDB metrics are already captured.")
+    raise SystemExit(0)
 
 # ── Step 3b: OSS data access policy ───────────────────────
 print("\nStep 3b: Creating OpenSearch data access policy...")

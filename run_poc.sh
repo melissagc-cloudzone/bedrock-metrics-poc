@@ -41,39 +41,39 @@ for ROUND in 1 2 3; do
     fi
 done
 
-# ── Step 4: RAG infra + POC ──────────────────────────────────
+# ── Step 4: Metrics report ───────────────────────────────────
+# RAG skipped: PowerUserAccess blocks iam:CreateRole (needed for KB service role)
 echo ""
-echo ">>> STEP 4: RAG setup (takes ~7 min — OpenSearch billing starts now)"
-python infrastructure/setup_rag.py
-
-KB_ID=$(python -c "import json; print(json.load(open('infrastructure/.rag_state.json'))['kb_id'])")
-export BEDROCK_KB_ID="$KB_ID"
-echo "  KB ID: $KB_ID"
-
-echo ""
-echo ">>> STEP 5: RAG chatbot simulation"
-python use_cases/rag_chatbot.py
-
-# ── Step 6: Metrics report ───────────────────────────────────
-echo ""
-echo ">>> STEP 6: Metrics report (reads from CloudWatch)"
+echo ">>> STEP 4: Metrics report (reads from CloudWatch)"
+echo "  (RAG skipped — iam:CreateRole not available in this account)"
 sleep 30
 python metrics/cloudwatch_reader.py
 python metrics/cost_report.py
 
-# ── Step 7: Cleanup ──────────────────────────────────────────
+# ── Step 5: Cleanup DynamoDB ─────────────────────────────────
 echo ""
-echo ">>> STEP 7: Cleanup — destroying all resources"
-python infrastructure/cleanup.py
+echo ">>> STEP 5: Cleanup DynamoDB table"
+python -c "
+import boto3, sys
+sys.path.insert(0, '.')
+ddb = boto3.client('dynamodb', region_name='us-east-1')
+try:
+    ddb.delete_table(TableName='bedrock-poc-usage-log')
+    print('  DynamoDB table deleted')
+except Exception as e:
+    print(f'  {e}')
+"
 
 echo ""
 echo "============================================================"
-echo "  POC complete. All resources destroyed."
+echo "  POC complete."
 echo ""
-echo "  Your data lives in CloudWatch for 15 months:"
-echo "  → AWS Console > CloudWatch > Metrics > BedrockPOC"
-echo "  → AWS Console > CloudWatch > Metrics > AWS/Bedrock"
+echo "  Data in CloudWatch (kept 15 months — free to query):"
+echo "  → Console > CloudWatch > Metrics > BedrockPOC"
+echo "     ChatbotCostUSD, ChatbotLatencyMs, AuditTrailCostUSD..."
+echo "  → Console > CloudWatch > Metrics > AWS/Bedrock"
+echo "     InputTokenCount, OutputTokenCount, InvocationLatency..."
 echo ""
-echo "  Your audit trail (already deleted from DynamoDB, but"
-echo "  metrics are in CloudWatch — use them for cost reports)."
+echo "  RAG was skipped (iam:CreateRole blocked by PowerUserAccess)."
+echo "  The RAG metrics story is documented in docs/metrics_guide.md"
 echo "============================================================"
