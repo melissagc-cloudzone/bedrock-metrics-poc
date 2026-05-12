@@ -170,7 +170,7 @@ oss_cl = OpenSearch(hosts=[{"host": host, "port": 443}],
 oss_cl.indices.create(INDEX_NAME, body={
     "settings": {"index.knn": True},
     "mappings": {"properties": {
-        "embedding": {"type": "knn_vector", "dimension": 1536},
+        "embedding": {"type": "knn_vector", "dimension": 1024},
         "text":      {"type": "text"},
         "metadata":  {"type": "text"},
     }}
