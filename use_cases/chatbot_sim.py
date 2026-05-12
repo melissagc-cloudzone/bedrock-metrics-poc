@@ -34,24 +34,33 @@ SESSIONS = [
 ]
 
 
+def _nova_messages(messages: list) -> list:
+    """Convert plain-string content to Nova's content-block format."""
+    out = []
+    for m in messages:
+        content = m["content"]
+        if isinstance(content, str):
+            content = [{"text": content}]
+        out.append({"role": m["role"], "content": content})
+    return out
+
+
 def run_turn(messages: list, turn_label: str) -> dict:
     t0 = time.time()
     response = client.invoke_model(
         modelId=CHATBOT_MODEL,
         body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 512,
-            "temperature": 0.7,
-            "messages": messages,
+            "messages": _nova_messages(messages),
+            "inferenceConfig": {"max_new_tokens": 512, "temperature": 0.7},
         }),
     )
     latency_ms = (time.time() - t0) * 1000
     result     = json.loads(response["body"].read())
 
-    in_tok  = result["usage"]["input_tokens"]
-    out_tok = result["usage"]["output_tokens"]
+    in_tok  = result["usage"]["inputTokens"]
+    out_tok = result["usage"]["outputTokens"]
     cost    = calc_cost(CHATBOT_MODEL, in_tok, out_tok)
-    text    = result["content"][0]["text"]
+    text    = result["output"]["message"]["content"][0]["text"]
 
     push_metric("ChatbotLatencyMs",    latency_ms, "Milliseconds", turn_label)
     push_metric("ChatbotInputTokens",  in_tok,     "Count",        turn_label)

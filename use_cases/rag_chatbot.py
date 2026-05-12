@@ -67,29 +67,27 @@ def embed_and_retrieve(question: str) -> tuple[list, float, float]:
 
 
 def generate_answer(question: str, chunks: list) -> dict:
-    context   = "\n\n".join(chunks)
-    system_p  = (
+    context  = "\n\n".join(chunks)
+    system_p = (
         "You are a helpful assistant. Answer the user's question using ONLY "
         "the provided context. If the context doesn't contain the answer, say so."
     )
-    messages  = [{"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}]
+    messages = [{"role": "user", "content": [{"text": f"Context:\n{context}\n\nQuestion: {question}"}]}]
 
     t0 = time.time()
     response = bedrock_runtime.invoke_model(
         modelId=CHATBOT_MODEL,
         body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 512,
-            "temperature": 0.3,
-            "system": system_p,
+            "system": [{"text": system_p}],
             "messages": messages,
+            "inferenceConfig": {"max_new_tokens": 512, "temperature": 0.3},
         }),
     )
     latency_ms = (time.time() - t0) * 1000
     result     = json.loads(response["body"].read())
 
-    in_tok  = result["usage"]["input_tokens"]
-    out_tok = result["usage"]["output_tokens"]
+    in_tok  = result["usage"]["inputTokens"]
+    out_tok = result["usage"]["outputTokens"]
     cost    = calc_cost(CHATBOT_MODEL, in_tok, out_tok)
 
     push_metric("RAGGenerationLatencyMs",    latency_ms, "Milliseconds", "generate")
@@ -97,7 +95,7 @@ def generate_answer(question: str, chunks: list) -> dict:
     push_metric("RAGGenerationOutputTokens", out_tok,    "Count",        "generate")
     push_metric("RAGGenerationCostUSD",      cost,       "None",         "generate")
 
-    return {"text": result["content"][0]["text"],
+    return {"text": result["output"]["message"]["content"][0]["text"],
             "in_tok": in_tok, "out_tok": out_tok,
             "latency_ms": latency_ms, "cost_usd": cost}
 

@@ -58,17 +58,15 @@ def invoke_and_log(use_case: str, prompt: str) -> dict:
     response = bedrock.invoke_model(
         modelId=CHATBOT_MODEL,
         body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 200,
-            "temperature": 0.5,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [{"role": "user", "content": [{"text": prompt}]}],
+            "inferenceConfig": {"max_new_tokens": 200, "temperature": 0.5},
         }),
     )
     latency_ms = (time.time() - t0) * 1000
     result     = json.loads(response["body"].read())
 
-    in_tok  = result["usage"]["input_tokens"]
-    out_tok = result["usage"]["output_tokens"]
+    in_tok  = result["usage"]["inputTokens"]
+    out_tok = result["usage"]["outputTokens"]
     cost    = calc_cost(CHATBOT_MODEL, in_tok, out_tok)
 
     call_id = f"{use_case}-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"

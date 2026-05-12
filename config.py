@@ -13,14 +13,14 @@ TAGS = {
 }
 
 # Models used in the POC
-CHATBOT_MODEL = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+CHATBOT_MODEL = "us.amazon.nova-lite-v1:0"
 EMBED_MODEL   = "amazon.titan-embed-text-v1"
 
 # On-demand pricing (us-east-1, May 2026)
 PRICING = {
-    "us.anthropic.claude-3-5-haiku-20241022-v1:0": {
-        "input_per_1k":  0.0008,
-        "output_per_1k": 0.004,
+    "us.amazon.nova-lite-v1:0": {
+        "input_per_1k":  0.00006,
+        "output_per_1k": 0.00024,
     },
     "amazon.titan-embed-text-v1": {
         "input_per_1k":  0.0001,
