@@ -27,6 +27,16 @@ output "kb_s3_bucket" {
   description = "S3 bucket for Knowledge Base source documents"
 }
 
+output "agent_id" {
+  value       = var.enable_agentcore ? aws_bedrockagent_agent.cost_advisor[0].agent_id : "AgentCore not enabled — set enable_agentcore=true"
+  description = "Bedrock Agent ID — export as AGENT_ID before running agentcore_demo.py"
+}
+
+output "agent_alias_id" {
+  value       = var.enable_agentcore ? aws_bedrockagent_agent_alias.cost_advisor[0].agent_alias_id : "AgentCore not enabled"
+  description = "Bedrock Agent Alias ID — export as AGENT_ALIAS_ID before running agentcore_demo.py"
+}
+
 output "next_steps" {
   value = <<-EOT
 
@@ -46,9 +56,16 @@ output "next_steps" {
       python use_cases/rag_chatbot.py
     %{endif}
 
+    %{if var.enable_agentcore}
+      # AgentCore Cost Advisor — export agent IDs first:
+      export AGENT_ID=${aws_bedrockagent_agent.cost_advisor[0].agent_id}
+      export AGENT_ALIAS_ID=${aws_bedrockagent_agent_alias.cost_advisor[0].agent_alias_id}
+      python use_cases/agentcore_demo.py
+    %{endif}
+
     ── Tear down everything when done: ──────────────────────────────────────
 
-      terraform destroy${var.enable_rag ? " -var=\"enable_rag=true\"" : ""}
+      terraform destroy${var.enable_rag ? " -var=\"enable_rag=true\"" : ""}${var.enable_agentcore ? " -var=\"enable_agentcore=true\"" : ""}
 
     ─────────────────────────────────────────────────────────────────────────
   EOT

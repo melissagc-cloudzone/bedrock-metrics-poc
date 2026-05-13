@@ -24,3 +24,9 @@ variable "alert_email" {
   default     = ""
   description = "Email address for CloudWatch alarm notifications. Leave empty to skip subscription."
 }
+
+variable "enable_agentcore" {
+  type        = bool
+  default     = false
+  description = "Set to true to deploy the AgentCore FinOps Cost Advisor agent (Lambda + Bedrock Agent + action groups)."
+}
