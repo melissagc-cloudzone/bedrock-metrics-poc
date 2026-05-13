@@ -50,29 +50,24 @@ sleep 30
 python metrics/cloudwatch_reader.py
 python metrics/cost_report.py
 
-# ── Step 5: Cleanup DynamoDB ─────────────────────────────────
-echo ""
-echo ">>> STEP 5: Cleanup DynamoDB table"
-python -c "
-import boto3, sys
-sys.path.insert(0, '.')
-ddb = boto3.client('dynamodb', region_name='us-east-1')
-try:
-    ddb.delete_table(TableName='bedrock-poc-usage-log')
-    print('  DynamoDB table deleted')
-except Exception as e:
-    print(f'  {e}')
-"
-
 echo ""
 echo "============================================================"
-echo "  POC complete."
+echo "  POC complete. Resources LEFT RUNNING for manager demo."
 echo ""
-echo "  Data in CloudWatch (kept 15 months — free to query):"
+echo "  Live resources (accruing NO ongoing cost):"
+echo "  → DynamoDB table: bedrock-poc-usage-log  (us-east-1)"
+echo "     Inspect in console: Tables > bedrock-poc-usage-log > Explore items"
+echo "     Tags on the table:  Project=bedrock-metrics-poc, Owner=melissa,"
+echo "                         Environment=playground, AutoDelete=yes"
+echo ""
+echo "  CloudWatch data (kept 15 months — free to query):"
 echo "  → Console > CloudWatch > Metrics > BedrockPOC"
-echo "     ChatbotCostUSD, ChatbotLatencyMs, AuditTrailCostUSD..."
+echo "     AuditTrailCostUSD, ChatbotSessionCostUSD, ChatbotLatencyMs..."
 echo "  → Console > CloudWatch > Metrics > AWS/Bedrock"
 echo "     InputTokenCount, OutputTokenCount, InvocationLatency..."
+echo ""
+echo "  When you're ready to clean up, run:"
+echo "  → ./teardown.sh"
 echo ""
 echo "  RAG was skipped (iam:CreateRole blocked by PowerUserAccess)."
 echo "  The RAG metrics story is documented in docs/metrics_guide.md"
